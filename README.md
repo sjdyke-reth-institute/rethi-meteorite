@@ -6,7 +6,7 @@ A set of MATLAB tools for retrieving impacts on the Lunar surface.
 ### For use in Scripts and SIMULINK Models
 The tools were originally created as pure MATLAB functions that could be used in a larger script or SIMULINK model. These can be simply downloaded and added in the SIMULINK model, taking time inputs.
 
-See `the testcase.m` file for 
+See the `testcase.m` file for example usage.
 
 ### For use in Dataset Generation
 As RETHi transitions to using the DEEDS database system, a script is used to retrieve various parameters from the function and export a dataset directly into the database.
