@@ -1,29 +1,42 @@
+% Nicholas Masso
+% Meteorite Impact Example Script
+% Created 6/7/2020
+% updated 9/8/2020 final version of function
+% updated 9/14/2020 added write to csv
+
 clc
 clear
-% updated 9/8/2020
+
 
 sideLength = 100; % Square sidelength, m
 years = 10; % number of years to run the sim
 lat = 0; % latitude of base
 lon = 0; % longitude of base
+filename = "out.csv";
+
 
 xtmv = getImpact([0,sideLength],[0,sideLength],lat,lon,[0,years*365*24*3600],datetime("14-Dec-2024 00:00:00"));
 d = getCrater(xtmv,1.83,1.6, "Granular");
 
 labels = ["xloc (m)","yloc (m)", "t (seconds)", "mass (grams)", "vX (Km/s)","vY (Km/s)","vZ (Km/s)", "crater diameter (m)"];
-csvwrite( "case1.csv", [xtmv, d])
+%fid = fopen(filename,"w");
+%fprintf(fid,"%s,",labels);
+%csvwrite(filename, [labels; xtmv, d])
+%fclose(fid);
 
-%{
-fid = fopen("case1.csv","w");
-fprintf(fid,"%s,",labels)
+
+fid = fopen(filename,"w");
+fprintf(fid, "%s,", labels);
+fprintf(fid, "\n");
 out = [xtmv, d];
-for i = length(out)
-    for j = length(out(1,:))
-        fprintf(fid, "%f,", out(i,j))
+for i = 1:length(out(:,1))
+    for j = 1:length(out(1,:))
+        fprintf(fid, "%.12f,", out(i,j));
     end
-    fprintf(fid,"\n")
+    fprintf(fid,"\n");
 end
-%}
+fclose(fid);
+
 
 figure(1)
 scatter(xtmv(:,1),xtmv(:,2),d * 1000)
