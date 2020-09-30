@@ -6,6 +6,7 @@
 % Edited 8/4/2020
 % edit 7/17/2020: added shower modeling code
 % edit 8/8/2020: added documentation
+% edit 9/29/2020: fixed shower distro, changed lat scaling
 
 function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startDate)
     % GETIMPACT  sample for all meteor impacts in a given area in a time window
@@ -199,10 +200,12 @@ function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startD
                     timeHi = timeHi + addTime;
                     hiArray(hPos,1) = ctime;
                     hiArray(hPos,2) = ctime + addTime;
+                    hPos = hPos + 1;
                 else
                     timeLo = timeLo + addTime;
                     loArray(lPos,1) = ctime;
                     loArray(lPos,2) = ctime + addTime;
+                    lPos = lPos + 1;
                 end
 
                 ctime = ctime + addTime;
@@ -250,9 +253,9 @@ function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startD
             % place it at the right point in the total timehorizon
             j = 1;
             while 1==1
-                treal = times(j,1) + t;
-                if treal > times(j,2)
-                    t = t - (times(j,2) - times(j,1));
+                treal = loArray(j,1) + t;
+                if treal > loArray(j,2)
+                    t = t - (loArray(j,2) - loArray(j,1));
                     j = j+1;
                 else
                     break
@@ -284,9 +287,9 @@ function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startD
             % place it at the right point in the timehorizon
             j = 1;
             while 1==1
-                treal = times(j,1) + t;
-                if treal > times(j,2)
-                    t = t - (times(j,2) - times(j,1));
+                treal = hiArray(j,1) + t;
+                if treal > hiArray(j,2)
+                    t = t - (hiArray(j,2) - hiArray(j,1));
                     j = j+1;
                 else
                     break
@@ -320,11 +323,10 @@ function [results] = getVelocity(latitude, numSamples)
     % Create a distribution to pull "random" values from. We are centering
     % on the mean velocity in near-moon space
     pd = makedist('Exponential','mu',17); % 17 km/s
-    pdLat = makedist('Normal', 'mu', 1, 'sigma', 0.39);
+    pdLat = makedist('Normal', 'mu', 0, 'sigma', 35);
     
-    % We can scale this based on the latitude
-    probLoc = (90 - abs(latitude) + 1) * 0.5 / 90;
-    latMultiplier = icdf(pdLat,probLoc);
+    % We scale this based on the latitude (equator is 1, hence the 87)
+    latMultiplier = pdf(pdLat, latitude) * 87.7320;
 
     for i = 1:numSamples
         z = rand(1, 3);
@@ -332,8 +334,7 @@ function [results] = getVelocity(latitude, numSamples)
         z(2) = 2 * z(2) - 1;
         z(3) = -1 * z(3);
         u = z / norm(z);
-        v = random(pd) * u;
-        v(3) = v(3) * latMultiplier;
+        v = random(pd) * latMultiplier * u;
         results(i,:) = v;
     end
 end
