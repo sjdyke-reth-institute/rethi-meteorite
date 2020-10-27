@@ -7,6 +7,7 @@
 % edit 7/17/2020: added shower modeling code
 % edit 8/8/2020: added documentation
 % edit 9/29/2020: fixed shower distro, changed lat scaling
+% edit 10/26/2020: changed way random values are picked, fixed stream scale
 
 function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startDate)
     % GETIMPACT  sample for all meteor impacts in a given area in a time window
@@ -54,7 +55,12 @@ function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startD
     % Any impactor below 10^-8 grams will leave a crater less than a
     % millimeter in diameter, even at highest velocities. 
     % 10^25 is the mass of the moon in grams (reference)
-    toalMass = integral(@getFlux, 10^(-8), 10^18, 'ArrayValued', true, 'Waypoints', 10 .^ [-9:0.1:0]);
+    spoFluxScale = 1;
+    ratioScale = 600000;
+    lBound = 10^-8;
+    uBound = 10^10;
+    toalMass = integral(@(x)getFlux(x,spoFluxScale), lBound, uBound, ...
+        'ArrayValued', true, 'Waypoints', 10 .^ (-9:0.1:0));
     
     % The Poisson function is XTM, and we will do the velocity part later.
     rate = area * period * toalMass;
@@ -75,7 +81,7 @@ function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startD
             m = 10^((random(pdLog) - 2.9) * 2.8);
             
             % Determine how likely it is
-            ratio = getFlux(m) / toalMass;
+            ratio = getFlux(m) * ratioScale / toalMass;
             
             % Check if that likeliness is enough here
             u = rand;
@@ -174,7 +180,7 @@ function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startD
         timeLo = 0;
         timeHi = 0;
         ctime = timeHorizon(1);
-        loArray = [];
+        loArray = [] ;
         lPos = 1;
         hiArray = [];
         hPos = 1;
@@ -218,31 +224,27 @@ function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startD
         % so now that we know the total time, we need to generate some random
         % events to fit in these windows. Might want to create the windows also
 
-        scaleLo = lowMultiplier * showers.data(s,8) / 10;
-        scaleHi = highMultiplier * showers.data(s,8) / 10;
-
-        scaleLo = scaleLo * 100;
-        scaleHi = scaleHi * 100;
-
-        uBound = 10^18;
+        % scale to sporadic (ZHR = 10) and then scale to hi/low
+        scaleLo = lowMultiplier * (showers.data(s,8) / 10);
+        scaleHi = highMultiplier * (showers.data(s,8) / 10);
 
         % for lower intensity
-        loMassFlux = integral(@(x)getFlux(x,scaleLo), 10^(-8), ...
+        loMassFlux = integral(@(x)getFlux(x,scaleLo*spoFluxScale), lBound, ...
             uBound, 'Waypoints', 10 .^ [-8:0.01:0]);
         numLowEvents = poissrnd(loMassFlux * timeLo * area);
 
         % higher intensity
-        HiMassFlux = integral(@(x)getFlux(x,scaleHi), 10^(-8), ...
+        HiMassFlux = integral(@(x)getFlux(x,scaleHi*spoFluxScale), lBound, ...
             uBound, 'Waypoints', 10 .^ [-8:0.01:0]);
         numHighEvents = poissrnd(HiMassFlux * timeHi * area);
 
-        % fprintf("Events: %d %d\n", numLowEvents, numHighEvents);
-
+        fprintf("Events: %d %d %d %d\n", numLowEvents, numHighEvents, timeLo, timeHi);
+        
         % Now to distribute them along the different time periods
         for i = 1:numLowEvents
             while true
                 m = 10^((random(pdLog) - 2.9) * 2.8);
-                ratio = getFlux(m) / loMassFlux;
+                ratio = getFlux(m) * ratioScale / loMassFlux;
                 u = rand;
                 if u < ratio
                     break
@@ -276,7 +278,7 @@ function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startD
         for i = 1:numHighEvents
             while true
                 m = 10^((random(pdLog) - 2.9) * 2.8);
-                ratio = getFlux(m) / HiMassFlux;
+                ratio = getFlux(m) * ratioScale / HiMassFlux;
                 u = rand;
                 if u < ratio
                     break
@@ -332,7 +334,7 @@ function [results] = getVelocity(latitude, numSamples)
         z = rand(1, 3);
         z(1) = 2 * z(1) - 1;
         z(2) = 2 * z(2) - 1;
-        z(3) = -1 * z(3);
+        z(3) = -2 * z(3);
         u = z / norm(z);
         v = random(pd) * latMultiplier * u;
         results(i,:) = v;
