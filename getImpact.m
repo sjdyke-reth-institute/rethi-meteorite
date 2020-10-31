@@ -322,9 +322,9 @@ function [results] = getVelocity(latitude, numSamples)
     % create an empty array to store results
     results = zeros(numSamples,3);
     
-    % Create a distribution to pull "random" values from. We are centering
+    % Create a distribution to pull random values from. We are centering
     % on the mean velocity in near-moon space
-    pd = makedist('Exponential','mu',17); % 17 km/s
+    pd = makedist('Normal','mu',17, 'sigma', 2); % 17 km/s
     pdLat = makedist('Normal', 'mu', 0, 'sigma', 35);
     
     % We scale this based on the latitude (equator is 1, hence the 87)
