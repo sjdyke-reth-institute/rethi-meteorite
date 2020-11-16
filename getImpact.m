@@ -8,6 +8,7 @@
 % edit 8/8/2020: added documentation
 % edit 9/29/2020: fixed shower distro, changed lat scaling
 % edit 10/26/2020: changed way random values are picked, fixed stream scale
+% edit 11/16/2020: sort xtmv array by time
 
 function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startDate)
     % GETIMPACT  sample for all meteor impacts in a given area in a time window
@@ -306,6 +307,8 @@ function xtmv = getImpact(areaX, areaY, latitude, longitude, timeHorizon, startD
             end
         end
     end
+    % sort the xtmv array by time
+    xtmv = sortrows(xtmv, 3);
 end
 
 function [results] = getVelocity(latitude, numSamples)

@@ -2,6 +2,7 @@
 % Meteorite Impact Dataset Generation Program
 % Written for integration with DEEDS
 % Created 9/14/2020
+% Edit 11/16/2020: added export to .mat file 
 
 function out = generateImpactData(xLength, yLength, latitude, longitude, duration, startDate)
     % GENERATEIMPACTDATA  take parameters for a case and generate the XTMV
@@ -10,6 +11,8 @@ function out = generateImpactData(xLength, yLength, latitude, longitude, duratio
     %   out = generateImpactData(xLength, yLength, lat, lon, duration, startDate, filename)
     %       creates a csv file in the current directory with the outputs of the sim.
     %       returns 1 on proper exit. The filename is auto-generated.
+    %       
+    %       also generates a .mat file with a timeseries of the same data.
     %
     %   INPUTS
     %       xLength = area bounding box x side length (m)
@@ -31,10 +34,14 @@ function out = generateImpactData(xLength, yLength, latitude, longitude, duratio
     % prepare the data to be written to a file
     labels = ["xloc (m)","yloc (m)", "t (seconds)", "mass (grams)", "vX (Km/s)","vY (Km/s)","vZ (Km/s)"];
     outdata = [xtmv];
-    filename = "xtmv_loc_" + latitude + "_" + longitude + "_year_" + year(d) + "_duration_" + duration + ".csv";
+    filename = "xtmv_loc_" + latitude + "_" + longitude + "_year_" + year(d) + "_duration_" + duration;
     
-    % Write the data to the file
-    fid = fopen(filename,"w");
+    % write to .mat file
+    ts = timeseries(xtmv, xtmv(:,3));
+    save(filename, 'ts', '-v7.3');
+    
+    % Write the data to csv file
+    fid = fopen(filename + ".csv","w");
     fprintf(fid, "%s,", labels);
     fprintf(fid, "\n");
     for i = 1:length(outdata(:,1))
